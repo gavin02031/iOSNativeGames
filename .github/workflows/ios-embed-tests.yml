@@ -1,0 +1,37 @@
+name: TotK iOS signed-image layout (synthetic only)
+
+on:
+  push:
+    branches:
+      - feature/totk-signed-image-generator
+    paths:
+      - "ios/tools/**"
+      - ".github/workflows/ios-embed-tests.yml"
+  pull_request:
+    paths:
+      - "ios/tools/**"
+      - ".github/workflows/ios-embed-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-embed-test:
+    name: Synthetic layout + iPhoneOS assembler
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm iPhoneOS assembler
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+      - name: Test privately-generated section layout using fake binary images
+        run: python3 -m unittest discover -s ios/tools -p test_gen_embed.py -v
+      - name: Confirm game file inputs are never present
+        run: |
+          test ! -f games/totk/build/runtime_tables.h
+          test ! -f ios/tools/ios_embed.h
+          test ! -f ios/tools/ios_embed.S
+          echo "Synthetic tests only; no ROM, keys, proprietary modules or firmware."

@@ -24,3 +24,14 @@ games/totk/tools/totk_xlate/obj/
 games/totk/tools/totk_xlate/bin/
 games/totk/scripts/shader_inventory/obj/
 games/totk/scripts/shader_inventory/bin/
+
+# iOS port outputs. Generated embeddings contain proprietary rewritten game bytes.
+out/
+*.ipa
+ios/private/
+ios/.generated/
+ios/build-private/
+ios/tools/ios_embed.S
+ios/tools/ios_embed.h
+ios/tools/ios_embed.o
+ios/tools/*.img
