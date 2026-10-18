@@ -88,6 +88,45 @@ class EmbedTests(unittest.TestCase):
         )
         self.assertGreater((self.dest / "ios_embed.o").stat().st_size, 0)
 
+    def test_macho_ios_executable_link_on_mac(self):
+        import sys
+        import subprocess
+        if sys.platform != "darwin":
+            self.skipTest("iPhoneOS linker is available only on macOS")
+        gen.make_sections(self.layout, self.rewritten, self.exported, self.dest)
+        sdk = subprocess.check_output(
+            ["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True
+        ).strip()
+        clang = subprocess.check_output(
+            ["xcrun", "--sdk", "iphoneos", "--find", "clang"], text=True
+        ).strip()
+        # This executable contains only synthetic sections, never game code.
+        harness = self.dest / "section_harness.c"
+        harness.write_text(
+            "#include <mach-o/getsect.h>\\n"
+            "#include <mach-o/ldsyms.h>\\n"
+            "int main(void) { unsigned long n=0; "
+            "return getsectiondata(&_mh_execute_header, "
+            "\\"__TOTKX\\", \\"__mainx0\\", &n)==0 || n!=16384; }\\n"
+        )
+        executable = self.dest / "synthetic-ios-runtime"
+        subprocess.run([
+            clang, "-arch", "arm64", "-isysroot", sdk,
+            "-miphoneos-version-min=17.0",
+            str(harness), str(self.dest / "ios_embed.S"),
+            "-Wl,-segprot,__TOTKX,rx,rx",
+            "-Wl,-segprot,__TOTKmainW,rw,rw",
+            "-Wl,-segprot,__TOTKsubsdk0W,rw,rw",
+            "-Wl,-segprot,__TOTKsdkW,rw,rw",
+            "-o", str(executable),
+        ], check=True)
+        self.assertGreater(executable.stat().st_size, 0)
+        segments = subprocess.check_output(["xcrun", "otool", "-l", str(executable)], text=True)
+        for segment in ("__TOTKX", "__TOTKmainW", "__TOTKsubsdk0W", "__TOTKsdkW"):
+            self.assertIn("segname " + segment, segments)
+        self.assertIn("sectname __mainx0", segments)
+        self.assertIn("sectname __sdkx1", segments)
+
     def test_tampered_module_rejected(self):
         target = self.rewritten / "sdk.patched.bin"
         raw = bytearray(target.read_bytes())
