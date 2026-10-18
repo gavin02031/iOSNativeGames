@@ -1,0 +1,41 @@
+name: iOS bootstrap (no game data)
+
+on:
+  push:
+    branches: [feature/ios-bootstrap]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-bootstrap.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-bootstrap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-iphoneos:
+    name: Compile unsigned iPhone shell
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Apple toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+      - name: Build iOS bootstrap (no proprietary game files)
+        run: bash ios/bootstrap/build.sh
+      - name: Inspect output
+        run: |
+          file out/ios/TOTKBootstrap.app/TOTKBootstrap
+          plutil -lint out/ios/TOTKBootstrap.app/Info.plist
+      - name: Upload unsigned bootstrap for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOSNativeGames-unsigned-bootstrap
+          path: out/ios/TOTKBootstrap.app/
+          if-no-files-found: error
+          retention-days: 7
