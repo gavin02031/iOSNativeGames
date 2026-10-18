@@ -13,7 +13,8 @@ Do not modify the unrelated Candela emulator.
   `games/totk/runtime/gamepad.m`. Inputs currently appear in a diagnostics
   label; they do **not** control gameplay.
 - `ios/bootstrap/build.sh`: compile an unsigned **arm64 iPhoneOS** `.app`
-  with Xcode's SDK without game data. This is a build smoke test, not an IPA.
+  and package a proper `Payload/TOTKBootstrap.app` **`.ipa` ZIP** with Xcode's
+  SDK, without game data. This is a build/package smoke test, not a playable game.
 - `.github/workflows/ios-bootstrap.yml`: compile that shell on a GitHub-hosted
   macOS runner so contributors with Windows PCs can inspect build logs.
 
@@ -28,13 +29,21 @@ On a Mac with full Xcode selected:
 bash ios/bootstrap/build.sh
 ```
 
-The result is `out/ios/TOTKBootstrap.app` (unsigned). On Windows, use the
-**iOS bootstrap (no game data)** GitHub Actions workflow instead. GitHub Actions
-can compile this game-free shell without requiring your game or keys.
+The outputs are `out/ios/TOTKBootstrap.app` and
+`out/ios/iOSNativeGames-bootstrap-unsigned.ipa`. The IPA is a real iOS package
+containing `Payload/TOTKBootstrap.app`, but **it has no Apple code signature**.
+It cannot be directly installed. A device-specific signing workflow, such as
+AltStore or Sideloadly, is still required and successful signing/installation is
+not yet verified.
 
-**Do not sideload this as a playable game.** It has no guest executable, no
-assets and no code-signing identity. An artifact being produced or an iPhone
-SDK compile succeeding does not establish on-device function.
+On Windows, go to GitHub **Actions → iOS bootstrap (no game data) → latest
+successful run → Artifacts → iOSNativeGames-bootstrap-unsigned-IPA**.
+GitHub wraps the IPA inside an artifact ZIP: extract that ZIP to obtain the
+actual `.ipa` file before signing it. No ROM or keys are required for the shell.
+
+**Do not sideload this expecting TotK gameplay.** The IPA has no guest
+executable or Nintendo assets. Successful IPA packaging does not establish a
+working native TotK port or prove on-device compatibility.
 
 ## Next milestones (not yet completed)
 
@@ -81,10 +90,11 @@ SDK compile succeeding does not establish on-device function.
 ## Completion criteria for milestone 0
 
 - iPhoneOS compiler exits successfully in GitHub Actions.
-- The artifact contains an arm64 Mach-O executable and valid Info.plist.
+- The artifact contains a valid `.ipa` with `Payload/TOTKBootstrap.app/`,
+  an arm64 Mach-O executable and valid Info.plist.
 - No proprietary or secret inputs are used by CI.
 - Future signed device tests validate Metal presentation, multitouch axes,
   orientation and external controller connections.
 
-**Status:** source created; macOS CI and real-device results must be checked
-before claiming milestone 0 is complete.
+**Status:** unsigned IPA packaging is implemented. Check the latest CI run for
+archive validation; code signing and device tests remain separate, unverified steps.
