@@ -68,6 +68,26 @@ class EmbedTests(unittest.TestCase):
                 bytes([85 + gen.MODULES.index(name)]) * 0x2000 + bytes(0x2000),
             )
 
+    def test_macho_arm64_assembly_on_mac(self):
+        import sys
+        import subprocess
+        if sys.platform != "darwin":
+            self.skipTest("iPhoneOS assembler is available only on macOS")
+        gen.make_sections(self.layout, self.rewritten, self.exported, self.dest)
+        sdk = subprocess.check_output(
+            ["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True
+        ).strip()
+        clang = subprocess.check_output(
+            ["xcrun", "--sdk", "iphoneos", "--find", "clang"], text=True
+        ).strip()
+        subprocess.run(
+            [clang, "-arch", "arm64", "-isysroot", sdk,
+             "-miphoneos-version-min=17.0", "-c",
+             str(self.dest / "ios_embed.S"), "-o", str(self.dest / "ios_embed.o")],
+            check=True,
+        )
+        self.assertGreater((self.dest / "ios_embed.o").stat().st_size, 0)
+
     def test_tampered_module_rejected(self):
         target = self.rewritten / "sdk.patched.bin"
         raw = bytearray(target.read_bytes())
