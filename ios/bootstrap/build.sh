@@ -38,6 +38,24 @@ cp "$ROOT/ios/app/Info.plist" "$APP/Info.plist"
   -o "$APP/TOTKBootstrap"
 
 plutil -lint "$APP/Info.plist"
-echo "Bootstrap app: $APP"
-echo "This is an UNSIGNED Metal+touch test shell, not a playable TotK IPA."
+
+# An iOS .ipa is a ZIP archive containing Payload/<AppName>.app.
+# Packaging does NOT code-sign the executable or make TotK playable.
+mkdir -p "$OUT"
+IPA="$(cd "$OUT" && pwd)/iOSNativeGames-bootstrap-unsigned.ipa"
+STAGE="$OUT/.ipa-stage"
+rm -rf "$STAGE" "$IPA"
+mkdir -p "$STAGE/Payload"
+ditto "$APP" "$STAGE/Payload/TOTKBootstrap.app"
+(
+  cd "$STAGE"
+  /usr/bin/zip -qry "$IPA" Payload
+)
+unzip -tq "$IPA" > /dev/null
+rm -rf "$STAGE"
+
+echo "Unsigned iPhone app: $APP"
+echo "Unsigned IPA: $IPA"
+echo "Only a Metal+touch test shell. This does NOT include playable TotK."
+echo "This IPA must be code-signed for your device before installation."
 echo "Game files and keys must not be uploaded to the repository or CI."
