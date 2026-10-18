@@ -33,7 +33,8 @@ cp "$ROOT/ios/app/Info.plist" "$APP/Info.plist"
   -Wall -Wextra -Wno-deprecated-declarations \
   "$SOURCE/main.m" "$SOURCE/touch_controls.m" \
   -framework Foundation -framework UIKit \
-  -framework QuartzCore -framework Metal -framework GameController \
+  -framework QuartzCore -framework CoreGraphics \
+  -framework Metal -framework GameController \
   -o "$APP/TOTKBootstrap"
 
 plutil -lint "$APP/Info.plist"
