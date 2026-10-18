@@ -103,11 +103,11 @@ class EmbedTests(unittest.TestCase):
         # This executable contains only synthetic sections, never game code.
         harness = self.dest / "section_harness.c"
         harness.write_text(
-            "#include <mach-o/getsect.h>\\n"
-            "#include <mach-o/ldsyms.h>\\n"
-            "int main(void) { unsigned long n=0; "
-            "return getsectiondata(&_mh_execute_header, "
-            "\\"__TOTKX\\", \\"__mainx0\\", &n)==0 || n!=16384; }\\n"
+            '#include <mach-o/getsect.h>\n'
+            '#include <mach-o/ldsyms.h>\n'
+            'int main(void) { unsigned long n=0; '
+            'return getsectiondata(&_mh_execute_header, "__TOTKX", '
+            '"__mainx0", &n)==0 || n!=16384; }\n'
         )
         executable = self.dest / "synthetic-ios-runtime"
         subprocess.run([
