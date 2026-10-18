@@ -14,6 +14,7 @@
 @end
 
 @interface TOTKBootstrapController : UIViewController
+- (void)resetTouchControls;
 @end
 
 @implementation TOTKBootstrapController {
@@ -151,6 +152,7 @@
 }
 - (BOOL)prefersStatusBarHidden { return YES; }
 - (BOOL)prefersHomeIndicatorAutoHidden { return YES; }
+- (void)resetTouchControls { [_touchControls resetInput]; }
 - (void)dealloc { [[NSNotificationCenter defaultCenter] removeObserver:self]; }
 @end
 
@@ -167,7 +169,7 @@
 }
 - (void)applicationWillResignActive:(UIApplication *)application {
     (void)application;
-    [((TOTKBootstrapController *)self.window.rootViewController)->_touchControls resetInput];
+    [(TOTKBootstrapController *)self.window.rootViewController resetTouchControls];
 }
 @end
 
