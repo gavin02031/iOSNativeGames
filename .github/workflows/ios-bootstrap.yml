@@ -1,0 +1,48 @@
+name: iOS bootstrap (no game data)
+
+on:
+  push:
+    branches: [feature/ios-bootstrap]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-bootstrap.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-bootstrap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-iphoneos:
+    name: Compile and package unsigned iPhone IPA
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Apple toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+      - name: Build iOS bootstrap (no proprietary game files)
+        run: bash ios/bootstrap/build.sh
+      - name: Verify unsigned IPA archive
+        run: |
+          set -euo pipefail
+          file out/ios/TOTKBootstrap.app/TOTKBootstrap
+          plutil -lint out/ios/TOTKBootstrap.app/Info.plist
+          IPA=out/ios/iOSNativeGames-bootstrap-unsigned.ipa
+          test -s "$IPA"
+          unzip -tq "$IPA"
+          unzip -Z1 "$IPA" | grep -Fxq 'Payload/TOTKBootstrap.app/Info.plist'
+          unzip -Z1 "$IPA" | grep -Fxq 'Payload/TOTKBootstrap.app/TOTKBootstrap'
+          echo "Verified: real IPA ZIP with Payload/TOTKBootstrap.app"
+      - name: Upload unsigned IPA (sign locally before device install)
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOSNativeGames-bootstrap-unsigned-IPA
+          path: out/ios/iOSNativeGames-bootstrap-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
